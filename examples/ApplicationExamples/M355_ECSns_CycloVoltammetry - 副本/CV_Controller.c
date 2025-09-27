@@ -106,8 +106,8 @@ AD5940Err CV_Init(void)
     memset(&g_CVParams, 0, sizeof(CV_Params_Type));
 
     /* 设置默认参数 */
-    g_CVParams.startVolt = -500.0f; /* -500mV */
-    g_CVParams.peakVolt = 500.0f;   /* +500mV */
+    g_CVParams.startVolt = -0.5f;   /* -0.5 V */
+    g_CVParams.peakVolt = 0.5f;     /* +0.5 V */
     g_CVParams.rtiaIndex = 11;      /* 20K (LPTIARTIA_20K) */
     g_CVParams.stepNumber = 400;    /* 400步 */
     g_CVParams.duration = 10000;    /* 10秒 */
@@ -215,8 +215,13 @@ AD5940Err CV_SetScanRate(float scanRate)
     }
 
     /* 根据扫速计算持续时间 */
-    float voltageRange = fabs(g_CVParams.peakVolt - g_CVParams.startVolt);
-    uint32_t newDuration = (uint32_t)(voltageRange / scanRate);
+    float voltageRange_mV = fabsf(g_CVParams.peakVolt - g_CVParams.startVolt) * 1000.0f;
+    float duration_ms = voltageRange_mV / scanRate;
+    uint32_t newDuration = (uint32_t)ceilf(duration_ms);
+    if (newDuration == 0U)
+    {
+        newDuration = CV_DURATION_MIN;
+    }
 
     /* 验证计算结果 */
     if (!CV_ValidateScanParams(g_CVParams.stepNumber, newDuration))
@@ -306,8 +311,8 @@ AD5940Err CV_SetMeasurementMode(CV_MeasMode_Type mode)
     switch (mode)
     {
     case CV_MODE_FAST_SCAN:
-        g_CVParams.startVolt = -1000.0f;
-        g_CVParams.peakVolt = 1000.0f;
+        g_CVParams.startVolt = -1.0f;
+        g_CVParams.peakVolt = 1.0f;
         g_CVParams.rtiaIndex = 11; /* 20K */
         g_CVParams.stepNumber = 200;
         g_CVParams.duration = 2000; /* 2秒 */
@@ -315,8 +320,8 @@ AD5940Err CV_SetMeasurementMode(CV_MeasMode_Type mode)
         break;
 
     case CV_MODE_HIGH_PRECISION:
-        g_CVParams.startVolt = -500.0f;
-        g_CVParams.peakVolt = 500.0f;
+        g_CVParams.startVolt = -0.5f;
+        g_CVParams.peakVolt = 0.5f;
         g_CVParams.rtiaIndex = 20; /* 100K */
         g_CVParams.stepNumber = 1000;
         g_CVParams.duration = 50000; /* 50秒 */
@@ -324,8 +329,8 @@ AD5940Err CV_SetMeasurementMode(CV_MeasMode_Type mode)
         break;
 
     case CV_MODE_LOW_CURRENT:
-        g_CVParams.startVolt = -200.0f;
-        g_CVParams.peakVolt = 200.0f;
+        g_CVParams.startVolt = -0.2f;
+        g_CVParams.peakVolt = 0.2f;
         g_CVParams.rtiaIndex = 26; /* 512K */
         g_CVParams.stepNumber = 400;
         g_CVParams.duration = 20000; /* 20秒 */
@@ -615,8 +620,18 @@ float CV_GetMaxCurrent(uint32_t rtiaIndex)
  */
 float CV_CalculateScanRate(float startVolt, float peakVolt, uint32_t duration)
 {
-    float voltageRange = fabs(peakVolt - startVolt);
-    return (voltageRange * 1000.0f) / duration; /* mV/s */
+    if (duration == 0U)
+    {
+        return 0.0f;
+    }
+
+    float voltageRange = fabsf(peakVolt - startVolt);
+    float duration_s = (float)duration / 1000.0f;
+    if (duration_s <= 0.0f)
+    {
+        return 0.0f;
+    }
+    return voltageRange / duration_s; /* V/s */
 }
 
 /**
@@ -662,8 +677,8 @@ static AD5940Err CV_ApplyParametersToRamp(void)
     }
 
     /* 更新RAMP配置 */
-    pRampCfg->RampStartVolt = g_CVParams.startVolt;
-    pRampCfg->RampPeakVolt = g_CVParams.peakVolt;
+    pRampCfg->RampStartVolt = g_CVParams.startVolt * 1000.0f;
+    pRampCfg->RampPeakVolt = g_CVParams.peakVolt * 1000.0f;
     pRampCfg->LPTIARtiaSel = g_CVParams.rtiaIndex;
     pRampCfg->StepNumber = g_CVParams.stepNumber;
     pRampCfg->RampDuration = g_CVParams.duration;

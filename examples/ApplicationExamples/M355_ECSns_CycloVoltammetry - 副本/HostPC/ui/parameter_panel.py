@@ -58,24 +58,39 @@ class ParameterPanel(QWidget):
         # RTIA索引选择
         self.rtia_combo = QComboBox()
         rtia_values = [
-            ("0 - 200Ω", 0),
-            ("1 - 1kΩ", 1),
-            ("2 - 5kΩ", 2),
-            ("3 - 10kΩ", 3),
-            ("4 - 20kΩ", 4),
-            ("5 - 40kΩ", 5),
-            ("6 - 80kΩ", 6),
-            ("7 - 160kΩ", 7),
-            ("8 - 320kΩ", 8),
-            ("9 - 640kΩ", 9),
-            ("10 - 1.28MΩ", 10),
-            ("11 - 2.56MΩ", 11)
+            ("1 - 200Ω (±9.0mA)", 1),
+            ("2 - 1kΩ (±1.8mA)", 2),
+            ("3 - 2kΩ (±900μA)", 3),
+            ("4 - 3kΩ (±600μA)", 4),
+            ("5 - 4kΩ (±450μA)", 5),
+            ("6 - 6kΩ (±300μA)", 6),
+            ("7 - 8kΩ (±225μA)", 7),
+            ("8 - 10kΩ (±180μA)", 8),
+            ("9 - 12kΩ (±150μA)", 9),
+            ("10 - 16kΩ (±112.5μA)", 10),
+            ("11 - 20kΩ (±90μA)", 11),
+            ("12 - 24kΩ (±75μA)", 12),
+            ("13 - 30kΩ (±60μA)", 13),
+            ("14 - 32kΩ (±56μA)", 14),
+            ("15 - 40kΩ (±45μA)", 15),
+            ("16 - 48kΩ (±37.5μA)", 16),
+            ("17 - 64kΩ (±28μA)", 17),
+            ("18 - 85kΩ (±21μA)", 18),
+            ("19 - 96kΩ (±19μA)", 19),
+            ("20 - 100kΩ (±18μA)", 20),
+            ("21 - 120kΩ (±15μA)", 21),
+            ("22 - 128kΩ (±14μA)", 22),
+            ("23 - 160kΩ (±11μA)", 23),
+            ("24 - 196kΩ (±9μA)", 24),
+            ("25 - 256kΩ (±7μA)", 25),
+            ("26 - 512kΩ (±3.5μA)", 26)
         ]
-        
+
         for text, value in rtia_values:
             self.rtia_combo.addItem(text, value)
-        
-        self.rtia_combo.setCurrentIndex(3)  # 默认10kΩ
+
+        default_index = self.rtia_combo.findData(11)
+        self.rtia_combo.setCurrentIndex(max(default_index, 0))
         current_layout.addRow("RTIA阻值:", self.rtia_combo)
         
         layout.addWidget(current_group)
@@ -86,7 +101,7 @@ class ParameterPanel(QWidget):
         
         # 扫描速率
         self.scan_rate_spin = QDoubleSpinBox()
-        self.scan_rate_spin.setRange(0.001, 10.0)
+        self.scan_rate_spin.setRange(0.001, 1000.0)
         self.scan_rate_spin.setSingleStep(0.001)
         self.scan_rate_spin.setDecimals(3)
         self.scan_rate_spin.setValue(0.1)
@@ -95,18 +110,18 @@ class ParameterPanel(QWidget):
         
         # 扫描步数
         self.steps_spin = QSpinBox()
-        self.steps_spin.setRange(10, 1000)
+        self.steps_spin.setRange(50, 2000)
         self.steps_spin.setSingleStep(1)
-        self.steps_spin.setValue(100)
+        self.steps_spin.setValue(400)
         scan_layout.addRow("扫描步数:", self.steps_spin)
-        
-        # 每步持续时间
+
+        # 总持续时间
         self.duration_spin = QSpinBox()
-        self.duration_spin.setRange(1, 10000)
+        self.duration_spin.setRange(1, 300000)
         self.duration_spin.setSingleStep(1)
-        self.duration_spin.setValue(100)
+        self.duration_spin.setValue(10000)
         self.duration_spin.setSuffix(" ms")
-        scan_layout.addRow("每步时间:", self.duration_spin)
+        scan_layout.addRow("总持续时间:", self.duration_spin)
         
         layout.addWidget(scan_group)
         
@@ -250,10 +265,13 @@ class ParameterPanel(QWidget):
         """重置参数到默认值"""
         self.start_voltage_spin.setValue(-0.5)
         self.peak_voltage_spin.setValue(0.5)
-        self.rtia_combo.setCurrentIndex(3)
+
+        default_index = self.rtia_combo.findData(11)
+        if default_index >= 0:
+            self.rtia_combo.setCurrentIndex(default_index)
         self.scan_rate_spin.setValue(0.1)
-        self.steps_spin.setValue(100)
-        self.duration_spin.setValue(100)
+        self.steps_spin.setValue(400)
+        self.duration_spin.setValue(10000)
         self.mode_combo.setCurrentIndex(0)
         self.cycles_spin.setValue(1)
         self.auto_range_check.setChecked(False)
@@ -262,18 +280,57 @@ class ParameterPanel(QWidget):
     
     def get_command(self, param_type, value):
         """根据参数类型和值生成命令"""
-        commands = {
-            "voltage_range": lambda v: f"$SVR,{v[0]:.3f},{v[1]:.3f}*XX",
-            "current_range": lambda v: f"$SCA,{v}*XX",
-            "scan_rate": lambda v: f"$SSR,{v:.3f}*XX",
-            "scan_params": lambda v: f"$SSP,{v[0]},{v[1]}*XX",
-            "measurement_mode": lambda v: f"$SMD,{v}*XX",
-            "query_all": lambda v: "$QALL*XX"
-        }
-        
-        if param_type in commands:
-            return commands[param_type](value)
+
+        if param_type in ("voltage_range", "start_voltage", "peak_voltage"):
+            if param_type == "voltage_range":
+                start, peak = value
+            elif param_type == "start_voltage":
+                start, peak = value, self.peak_voltage_spin.value()
+            else:  # peak_voltage
+                start, peak = self.start_voltage_spin.value(), value
+            return f"$SVR,{start:.3f},{peak:.3f}"
+
+        if param_type in ("current_range", "rtia_index"):
+            return f"$SCA,{int(value)}"
+
+        if param_type == "scan_rate":
+            return f"$SSR,{value:.3f}"
+
+        if param_type in ("scan_params", "steps", "duration"):
+            if param_type == "scan_params":
+                steps, duration = value
+            elif param_type == "steps":
+                steps, duration = int(value), int(self.duration_spin.value())
+            else:  # duration
+                steps, duration = int(self.steps_spin.value()), int(value)
+            return f"$SSP,{int(steps)},{int(duration)}"
+
+        if param_type in ("measurement_mode", "mode"):
+            return f"$SMD,{int(value)}"
+
+        if param_type == "query_all":
+            return "$QALL"
+
         return None
+
+    def get_all_parameters(self):
+        """生成当前参数对应的命令序列"""
+        commands = []
+
+        start_voltage = self.start_voltage_spin.value()
+        peak_voltage = self.peak_voltage_spin.value()
+        commands.append(self.get_command("voltage_range", (start_voltage, peak_voltage)))
+
+        commands.append(self.get_command("current_range", self.rtia_combo.currentData()))
+        commands.append(self.get_command("scan_rate", self.scan_rate_spin.value()))
+
+        steps = self.steps_spin.value()
+        duration = self.duration_spin.value()
+        commands.append(self.get_command("scan_params", (steps, duration)))
+
+        commands.append(self.get_command("measurement_mode", self.mode_combo.currentData()))
+
+        return [cmd for cmd in commands if cmd]
     
     def get_config(self):
         """获取当前配置"""

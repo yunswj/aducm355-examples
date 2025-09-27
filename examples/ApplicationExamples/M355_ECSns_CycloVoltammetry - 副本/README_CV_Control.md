@@ -9,7 +9,7 @@
 ### 可控参数
 - **电压范围**: -2.4V 到 +2.4V，分辨率0.1V
 - **电流档位**: 27个RTIA档位可选(200Ω到512kΩ)
-- **扫描速率**: 0.02 mV/s 到 5 V/s
+- **扫描速率**: 0.001 V/s 到 1000 V/s
 - **扫描步数**: 50 到 2000步
 - **测量模式**: 快速扫描、高精度、低电流、自定义
 
@@ -17,7 +17,7 @@
 - **接口**: UART串口通信
 - **波特率**: 115200 bps (可配置)
 - **数据格式**: 8N1
-- **命令格式**: `$CMD,param1,param2*XX\r\n`
+- **命令格式**: `$CMD,param1,param2*CS\r\n`（CS为XOR校验和）
 - **校验**: XOR校验和
 
 ## 文件结构
@@ -60,7 +60,7 @@ int main(void)
     // 设置默认参数
     CV_SetVoltageRange(-1.0f, 1.0f);
     CV_SetCurrentRange(10);
-    CV_SetScanRate(100.0f);
+    CV_SetScanRate(0.1f);
     
     // 主循环
     while(1) {
@@ -81,19 +81,19 @@ int main(void)
 
 ```bash
 # 设置电压范围 (-1V 到 +1V)
-$SVR,-1.0,1.0*5A
+$SVR,-1.0,1.0*5E
 
 # 设置电流档 (RTIA索引10)
-$SCA,10*2F
+$SCA,10*58
 
-# 设置扫速 (100 mV/s)
-$SSR,100*7B
+# 设置扫速 (0.1 V/s)
+$SSR,0.100*75
 
 # 开始测量
-$START*18
+$START*64
 
 # 查询状态
-$QST*0F
+$QST*72
 ```
 
 ## 命令参考
@@ -102,54 +102,54 @@ $QST*0F
 
 | 命令 | 格式 | 说明 | 示例 |
 |------|------|------|------|
-| SVR | `$SVR,start,peak*XX` | 设置电压范围 | `$SVR,-1.0,1.0*5A` |
-| SCA | `$SCA,rtia_index*XX` | 设置电流档 | `$SCA,10*2F` |
-| SSR | `$SSR,rate*XX` | 设置扫速(mV/s) | `$SSR,100*7B` |
-| SSP | `$SSP,steps,duration*XX` | 设置扫描参数 | `$SSP,200,1000*4C` |
-| SMD | `$SMD,mode*XX` | 设置测量模式 | `$SMD,0*1E` |
+| SVR | `$SVR,start,peak*CS` | 设置电压范围 | `$SVR,-1.0,1.0*5E` |
+| SCA | `$SCA,rtia_index*CS` | 设置电流档 | `$SCA,10*58` |
+| SSR | `$SSR,rate*CS` | 设置扫速 (V/s) | `$SSR,0.100*75` |
+| SSP | `$SSP,steps,duration*CS` | 设置扫描参数 | `$SSP,200,1000*47` |
+| SMD | `$SMD,mode*CS` | 设置测量模式 | `$SMD,0*62` |
 
 ### 控制命令
 
 | 命令 | 格式 | 说明 | 示例 |
 |------|------|------|------|
-| START | `$START*XX` | 开始测量 | `$START*18` |
-| STOP | `$STOP*XX` | 停止测量 | `$STOP*1F` |
-| PAUSE | `$PAUSE*XX` | 暂停测量 | `$PAUSE*0B` |
-| RESUME | `$RESUME*XX` | 恢复测量 | `$RESUME*2A` |
-| RESET | `$RESET*XX` | 重置系统 | `$RESET*3D` |
+| START | `$START*CS` | 开始测量 | `$START*64` |
+| STOP | `$STOP*CS` | 停止测量 | `$STOP*3C` |
+| PAUSE | `$PAUSE*CS` | 暂停测量 | `$PAUSE*76` |
+| RESUME | `$RESUME*CS` | 恢复测量 | `$RESUME*3D` |
+| RESET | `$RESET*CS` | 重置系统 | `$RESET*71` |
 
 ### 查询命令
 
 | 命令 | 格式 | 说明 | 示例 |
 |------|------|------|------|
-| QVR | `$QVR*XX` | 查询电压范围 | `$QVR*0F` |
-| QCA | `$QCA*XX` | 查询电流档 | `$QCA*06` |
-| QSR | `$QSR*XX` | 查询扫速 | `$QSR*09` |
-| QSP | `$QSP*XX` | 查询扫描参数 | `$QSP*0C` |
-| QST | `$QST*XX` | 查询状态 | `$QST*0F` |
-| QALL | `$QALL*XX` | 查询所有参数 | `$QALL*12` |
-| HELP | `$HELP*XX` | 显示帮助 | `$HELP*15` |
+| QVR | `$QVR*CS` | 查询电压范围 | `$QVR*71` |
+| QCA | `$QCA*CS` | 查询电流档 | `$QCA*77` |
+| QSR | `$QSR*CS` | 查询扫速 | `$QSR*74` |
+| QSP | `$QSP*CS` | 查询扫描参数 | `$QSP*76` |
+| QST | `$QST*CS` | 查询状态 | `$QST*72` |
+| QALL | `$QALL*CS` | 查询所有参数 | `$QALL*34` |
+| HELP | `$HELP*CS` | 显示帮助 | `$HELP*35` |
 
 ## 响应格式
 
 ### 成功响应 (ACK)
 ```
-$ACK,CMD,data*XX\r\n
+$ACK,CMD,data*CS\r\n
 ```
 
 ### 错误响应 (NAK)  
 ```
-$NAK,CMD,EXX*XX\r\n
+$NAK,CMD,EXX*CS\r\n
 ```
 
 ### 数据响应
 ```
-$DATA,voltage,current,timestamp*XX\r\n
+$DATA,voltage,current,timestamp*CS\r\n
 ```
 
 ### 信息响应
 ```
-$INFO,message*XX\r\n
+$INFO,message*CS\r\n
 ```
 
 ## 参数范围
@@ -174,25 +174,25 @@ $INFO,message*XX\r\n
 | 26 | 512kΩ | 4.7μA | 0.16nA |
 
 ### 扫描速率
-- **最小值**: 0.02 mV/s (0.28mV步长)
-- **最大值**: 5 V/s (10mV步长)  
-- **推荐范围**: 1-1000 mV/s
+- **最小值**: 0.001 V/s
+- **最大值**: 1000 V/s  
+- **推荐范围**: 0.01-100 V/s
 
 ### 扫描参数
 - **步数范围**: 50-2000步
 - **持续时间**: 1-10000ms
-- **总测量时间**: 最大20秒
+- **总测量时间**: 最大300秒
 
 ## 测量模式
 
 ### 快速扫描模式 (FAST_SCAN)
 - 优化速度，适合快速筛选
-- 扫速: 100-5000 mV/s
+- 扫速: 0.1-5 V/s
 - 精度: 中等
 
 ### 高精度模式 (HIGH_PRECISION)  
 - 优化精度，适合精确测量
-- 扫速: 0.02-100 mV/s
+- 扫速: 0.00002-0.1 V/s
 - 精度: 最高
 
 ### 低电流模式 (LOW_CURRENT)
@@ -309,7 +309,7 @@ def adaptive_measurement():
             # 如果电流过大，降低RTIA
             if max_current > 1e-3:  # 1mA
                 ser.write(b'$PAUSE*0B\r\n')
-                ser.write(b'$SCA,15*XX\r\n')  # 更高阻值
+                ser.write(b'$SCA,15*5D\r\n')  # 更高阻值
                 ser.write(b'$RESUME*2A\r\n')
                 
         elif 'completed' in response:

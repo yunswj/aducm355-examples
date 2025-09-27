@@ -99,8 +99,8 @@ $SVR,-1.0,1.0*5A
 # 设置电流档 (RTIA索引10)
 $SCA,10*2F
 
-# 设置扫速 (100 mV/s)
-$SSR,100*7B
+# 设置扫速 (0.1 V/s)
+$SSR,0.100*75
 
 # 开始测量
 $START*18
@@ -174,7 +174,7 @@ $STOP*1F
 在UART_Parser.c中的g_CmdTable数组中添加新命令：
 
 ```c
-{"MYCMD", UART_CMD_MYCMD, 1, 1, UART_HandleMyCommand, "My Command: $MYCMD,param*XX"}
+{"MYCMD", UART_CMD_MYCMD, 1, 1, UART_HandleMyCommand, "My Command: $MYCMD,param*CS"}
 ```
 
 ### 2. 修改参数范围

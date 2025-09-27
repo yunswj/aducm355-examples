@@ -16,23 +16,23 @@ UART_RxBuffer_Type g_UartRxBuffer = {0};
 
 /* 命令表定义 */
 static const UART_CmdEntry_Type g_CmdTable[] = {
-    {"SVR",   UART_CMD_SVR,    2, 2, UART_HandleSetVoltageRange,  "Set Voltage Range: $SVR,start,peak*XX"},
-    {"SCA",   UART_CMD_SCA,    1, 1, UART_HandleSetCurrentRange,  "Set Current Range: $SCA,rtia_index*XX"},
-    {"SSR",   UART_CMD_SSR,    1, 1, UART_HandleSetScanRate,      "Set Scan Rate: $SSR,rate*XX"},
-    {"SSP",   UART_CMD_SSP,    2, 2, UART_HandleSetScanParams,    "Set Scan Params: $SSP,steps,duration*XX"},
-    {"SMD",   UART_CMD_SMD,    1, 1, UART_HandleSetMeasMode,      "Set Meas Mode: $SMD,mode*XX"},
-    {"START", UART_CMD_START,  0, 0, UART_HandleStartMeas,        "Start Measurement: $START*XX"},
-    {"STOP",  UART_CMD_STOP,   0, 0, UART_HandleStopMeas,         "Stop Measurement: $STOP*XX"},
-    {"PAUSE", UART_CMD_PAUSE,  0, 0, UART_HandlePauseMeas,        "Pause Measurement: $PAUSE*XX"},
-    {"RESUME",UART_CMD_RESUME, 0, 0, UART_HandleResumeMeas,       "Resume Measurement: $RESUME*XX"},
-    {"QVR",   UART_CMD_QVR,    0, 0, UART_HandleQueryVoltageRange,"Query Voltage Range: $QVR*XX"},
-    {"QCA",   UART_CMD_QCA,    0, 0, UART_HandleQueryCurrentRange,"Query Current Range: $QCA*XX"},
-    {"QSR",   UART_CMD_QSR,    0, 0, UART_HandleQueryScanRate,    "Query Scan Rate: $QSR*XX"},
-    {"QSP",   UART_CMD_QSP,    0, 0, UART_HandleQueryScanParams,  "Query Scan Params: $QSP*XX"},
-    {"QST",   UART_CMD_QST,    0, 0, UART_HandleQueryStatus,      "Query Status: $QST*XX"},
-    {"QALL",  UART_CMD_QALL,   0, 0, UART_HandleQueryAll,         "Query All Params: $QALL*XX"},
-    {"RESET", UART_CMD_RESET,  0, 0, UART_HandleReset,            "Reset System: $RESET*XX"},
-    {"HELP",  UART_CMD_HELP,   0, 0, UART_HandleHelp,             "Show Help: $HELP*XX"}
+    {"SVR",   UART_CMD_SVR,    2, 2, UART_HandleSetVoltageRange,  "Set Voltage Range: $SVR,start,peak*CS"},
+    {"SCA",   UART_CMD_SCA,    1, 1, UART_HandleSetCurrentRange,  "Set Current Range: $SCA,rtia_index*CS"},
+    {"SSR",   UART_CMD_SSR,    1, 1, UART_HandleSetScanRate,      "Set Scan Rate: $SSR,rate*CS"},
+    {"SSP",   UART_CMD_SSP,    2, 2, UART_HandleSetScanParams,    "Set Scan Params: $SSP,steps,duration*CS"},
+    {"SMD",   UART_CMD_SMD,    1, 1, UART_HandleSetMeasMode,      "Set Meas Mode: $SMD,mode*CS"},
+    {"START", UART_CMD_START,  0, 0, UART_HandleStartMeas,        "Start Measurement: $START*CS"},
+    {"STOP",  UART_CMD_STOP,   0, 0, UART_HandleStopMeas,         "Stop Measurement: $STOP*CS"},
+    {"PAUSE", UART_CMD_PAUSE,  0, 0, UART_HandlePauseMeas,        "Pause Measurement: $PAUSE*CS"},
+    {"RESUME",UART_CMD_RESUME, 0, 0, UART_HandleResumeMeas,       "Resume Measurement: $RESUME*CS"},
+    {"QVR",   UART_CMD_QVR,    0, 0, UART_HandleQueryVoltageRange,"Query Voltage Range: $QVR*CS"},
+    {"QCA",   UART_CMD_QCA,    0, 0, UART_HandleQueryCurrentRange,"Query Current Range: $QCA*CS"},
+    {"QSR",   UART_CMD_QSR,    0, 0, UART_HandleQueryScanRate,    "Query Scan Rate: $QSR*CS"},
+    {"QSP",   UART_CMD_QSP,    0, 0, UART_HandleQueryScanParams,  "Query Scan Params: $QSP*CS"},
+    {"QST",   UART_CMD_QST,    0, 0, UART_HandleQueryStatus,      "Query Status: $QST*CS"},
+    {"QALL",  UART_CMD_QALL,   0, 0, UART_HandleQueryAll,         "Query All Params: $QALL*CS"},
+    {"RESET", UART_CMD_RESET,  0, 0, UART_HandleReset,            "Reset System: $RESET*CS"},
+    {"HELP",  UART_CMD_HELP,   0, 0, UART_HandleHelp,             "Show Help: $HELP*CS"}
 };
 
 /* 错误描述字符串表 */

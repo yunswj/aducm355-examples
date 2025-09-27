@@ -56,8 +56,8 @@ extern "C"
 #define CV_SCAN_RATE_MIN        0.001f      /**< 最小扫速 (V/s) */
 #define CV_SCAN_RATE_MAX        1000.0f     /**< 最大扫速 (V/s) */
 #define CV_DURATION_MIN         1           /**< 最小持续时间 (ms) */
-#define CV_DURATION_MAX         10000       /**< 最大持续时间 (ms) */
-#define CV_SAMPLE_DELAY_MIN     0.001f      /**< 最小采样延迟 (s) */
+#define CV_DURATION_MAX         300000      /**< 最大持续时间 (ms) */
+#define CV_SAMPLE_DELAY_MIN     0.001f      /**< 最小采样延迟 (ms) */
 
 /* 步数限制 */
 #define CV_STEP_MIN             50          /**< 最小步数 */
@@ -113,10 +113,10 @@ extern "C"
      */
     typedef struct
     {
-        float startVolt;     /**< 起始电压 (mV) */
-        float peakVolt;      /**< 峰值电压 (mV) */
+        float startVolt;     /**< 起始电压 (V) */
+        float peakVolt;      /**< 峰值电压 (V) */
         uint32_t rtiaIndex;  /**< RTIA索引 */
-        float scanRate;      /**< 扫速 (mV/s) */
+        float scanRate;      /**< 扫速 (V/s) */
         uint32_t stepNumber; /**< 步数 */
         uint32_t duration;   /**< 持续时间 (ms) */
         float sampleDelay;   /**< 采样延迟 (ms) */
@@ -161,8 +161,8 @@ typedef struct {
 
     /**
      * @brief 设置电压范围
-     * @param startVolt 起始电压 (mV)
-     * @param peakVolt 峰值电压 (mV)
+     * @param startVolt 起始电压 (V)
+     * @param peakVolt 峰值电压 (V)
      * @return AD5940Err 错误代码
      */
     AD5940Err CV_SetVoltageRange(float startVolt, float peakVolt);
@@ -176,7 +176,7 @@ typedef struct {
 
     /**
      * @brief 设置扫速
-     * @param scanRate 扫速 (mV/s)
+     * @param scanRate 扫速 (V/s)
      * @return AD5940Err 错误代码
      */
     AD5940Err CV_SetScanRate(float scanRate);
@@ -207,8 +207,8 @@ typedef struct {
 
     /**
      * @brief 获取电压范围
-     * @param pStartVolt 起始电压指针 (mV)
-     * @param pPeakVolt 峰值电压指针 (mV)
+     * @param pStartVolt 起始电压指针 (V)
+     * @param pPeakVolt 峰值电压指针 (V)
      * @return AD5940Err 错误代码
      */
     AD5940Err CV_GetVoltageRange(float *pStartVolt, float *pPeakVolt);
@@ -222,7 +222,7 @@ typedef struct {
 
     /**
      * @brief 获取扫速
-     * @param pScanRate 扫速指针 (mV/s)
+     * @param pScanRate 扫速指针 (V/s)
      * @return AD5940Err 错误代码
      */
     AD5940Err CV_GetScanRate(float *pScanRate);
