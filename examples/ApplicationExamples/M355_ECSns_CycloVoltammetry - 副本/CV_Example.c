@@ -44,7 +44,7 @@ void CV_ExampleInit(void)
     /* 设置默认参数 */
     CV_SetVoltageRange(-1.0f, 1.0f);          /* 电压范围: -1V 到 +1V */
     CV_SetCurrentRange(10);                   /* 电流档: RTIA_INT_10K */
-    CV_SetScanRate(0.1f);                     /* 扫速: 100 mV/s */
+    CV_SetScanRate(0.1f);                     /* 扫速: 0.1 V/s */
     CV_SetScanParams(200, 1000);              /* 步数: 200, 持续时间: 1000ms */
     CV_SetMeasurementMode(CV_MODE_FAST_SCAN); /* 快速扫描模式 */
 
@@ -138,27 +138,27 @@ void CV_PrintWelcomeMessage(void)
     printf("========================================\n");
     printf("\n");
     printf("Available Commands:\n");
-    printf("  $SVR,start,peak*XX     - Set Voltage Range\n");
-    printf("  $SCA,rtia_index*XX     - Set Current Range\n");
-    printf("  $SSR,rate*XX           - Set Scan Rate\n");
-    printf("  $SSP,steps,duration*XX - Set Scan Parameters\n");
-    printf("  $SMD,mode*XX           - Set Measurement Mode\n");
-    printf("  $START*XX              - Start Measurement\n");
-    printf("  $STOP*XX               - Stop Measurement\n");
-    printf("  $PAUSE*XX              - Pause Measurement\n");
-    printf("  $RESUME*XX             - Resume Measurement\n");
-    printf("  $QVR*XX                - Query Voltage Range\n");
-    printf("  $QCA*XX                - Query Current Range\n");
-    printf("  $QSR*XX                - Query Scan Rate\n");
-    printf("  $QSP*XX                - Query Scan Parameters\n");
-    printf("  $QST*XX                - Query Status\n");
-    printf("  $QALL*XX               - Query All Parameters\n");
-    printf("  $RESET*XX              - Reset System\n");
-    printf("  $HELP*XX               - Show Help\n");
+    printf("  $SVR,start,peak*CS     - Set Voltage Range\n");
+    printf("  $SCA,rtia_index*CS     - Set Current Range\n");
+    printf("  $SSR,rate*CS           - Set Scan Rate\n");
+    printf("  $SSP,steps,duration*CS - Set Scan Parameters\n");
+    printf("  $SMD,mode*CS           - Set Measurement Mode\n");
+    printf("  $START*CS              - Start Measurement\n");
+    printf("  $STOP*CS               - Stop Measurement\n");
+    printf("  $PAUSE*CS              - Pause Measurement\n");
+    printf("  $RESUME*CS             - Resume Measurement\n");
+    printf("  $QVR*CS                - Query Voltage Range\n");
+    printf("  $QCA*CS                - Query Current Range\n");
+    printf("  $QSR*CS                - Query Scan Rate\n");
+    printf("  $QSP*CS                - Query Scan Parameters\n");
+    printf("  $QST*CS                - Query Status\n");
+    printf("  $QALL*CS               - Query All Parameters\n");
+    printf("  $RESET*CS              - Reset System\n");
+    printf("  $HELP*CS               - Show Help\n");
     printf("\n");
     printf("Parameter Ranges:\n");
     printf("  Voltage: %.1f V to %.1f V\n", CV_VOLTAGE_MIN, CV_VOLTAGE_MAX);
-    printf("  Scan Rate: %.3f mV/s to %.1f V/s\n", CV_SCAN_RATE_MIN, CV_SCAN_RATE_MAX);
+    printf("  Scan Rate: %.3f V/s to %.1f V/s\n", CV_SCAN_RATE_MIN, CV_SCAN_RATE_MAX);
     printf("  RTIA Index: 0-26 (see manual for values)\n");
     printf("  Steps: %d to %d\n", CV_STEP_MIN, CV_STEP_MAX);
     printf("  Duration: %d ms to %d ms\n", CV_DURATION_MIN, CV_DURATION_MAX);
@@ -183,7 +183,7 @@ void CV_PrintParameterStatus(void)
         printf("Current Parameters:\n");
         printf("  Voltage Range: %.1f V to %.1f V\n", params.startVolt, params.peakVolt);
         printf("  Current Range: RTIA Index %u\n", params.rtiaIndex);
-        printf("  Scan Rate: %.3f mV/s\n", params.scanRate);
+        printf("  Scan Rate: %.3f V/s\n", params.scanRate);
         printf("  Scan Steps: %u\n", params.stepNumber);
         printf("  Duration: %u ms\n", params.duration);
         printf("  Status: %s\n", (params.state == CV_STATE_IDLE) ? "Idle" : (params.state == CV_STATE_CONFIGURED) ? "Configured"
@@ -281,7 +281,7 @@ void CV_ErrorHandler(AD5940Err errorCode)
 
 /**
  * @brief 计算最优扫描参数
- * @param scanRate 扫速 (mV/s)
+ * @param scanRate 扫速 (V/s)
  * @param voltageRange 电压范围 (V)
  * @param pSteps 输出步数
  * @param pDuration 输出持续时间

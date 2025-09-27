@@ -89,17 +89,16 @@ $<命令>,<参数1>,<参数2>,...*<校验和>
 
 ### 主要命令
 
-- `$SVR,start,peak*XX` - 开始峰值检测
-- `$SCA,rtia_index*XX` - 设置RTIA索引
-- `$SCA,voltage_high*XX` - 设置高电压
-- `$SCA,voltage_low*XX` - 设置低电压
-- `$SCA,voltage_step*XX` - 设置电压步进
-- `$SCA,scan_rate*XX` - 设置扫描速率
+- `$SVR,start,peak*CS` - 设置电压范围
+- `$SCA,rtia_index*CS` - 设置RTIA索引
+- `$SSR,rate*CS` - 设置扫描速率 (V/s)
+- `$SSP,steps,duration*CS` - 设置步数和总持续时间
+- `$SMD,mode*CS` - 切换测量模式
 
 ### 响应格式
-- 成功: `$ACK*XX`
-- 错误: `$NAK,<错误码>*XX`
-- 数据: `$DATA,<电压>,<电流>*XX`
+- 成功: `$ACK*CS`
+- 错误: `$NAK,<错误码>*CS`
+- 数据: `$DATA,<电压>,<电流>*CS`
 
 ## 故障排除
 

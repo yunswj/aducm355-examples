@@ -40,12 +40,15 @@ int main(void)
    /* 设置默认参数 */
    CV_SetVoltageRange(-1.0f, 1.0f);          /* 电压范围: -1V 到 +1V */
    CV_SetCurrentRange(10);                   /* 电流档: RTIA_INT_10K */
-   CV_SetScanRate(100.0f);                   /* 扫速: 100 mV/s */
+   CV_SetScanRate(0.1f);                     /* 扫速: 0.1 V/s */
    CV_SetScanParams(200, 1000);              /* 步数: 200, 持续时间: 1000ms */
    CV_SetMeasurementMode(CV_MODE_FAST_SCAN); /* 快速扫描模式 */
 
    printf("AD5940 Cyclic Voltammetry with UART Control Ready!\r\n");
-   printf("Type $HELP*15 for available commands\r\n");
+
+   /* 通过统一的INFO帧提示命令帮助，避免使用带占位校验和的纯文本 */
+   UART_GenerateInfoResponse("Type $HELP for available commands", g_ResponseBuffer);
+   printf("%s", g_ResponseBuffer);
 
    /* 主循环 */
    while (1)

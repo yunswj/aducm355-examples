@@ -209,14 +209,18 @@ class MainWindow(QMainWindow):
         if connected:
             self.connection_status_label.setText("已连接")
             self.connection_status_label.setStyleSheet("color: green; font-weight: bold;")
+            self.measurement_status_label.setText("待机")
         else:
             self.connection_status_label.setText("未连接")
             self.connection_status_label.setStyleSheet("color: red; font-weight: bold;")
-        
+            self.measurement_status_label.setText("未连接")
+
         # 更新各面板状态
         self.connection_panel.set_connected(connected)
         self.parameter_panel.set_connected(connected)
         self.measurement_panel.set_connected(connected)
+        if not connected:
+            self.measurement_panel.measurement_completed()
     
     def on_parameter_changed(self, param_type, value):
         """处理参数变化"""
@@ -224,55 +228,87 @@ class MainWindow(QMainWindow):
             # 发送参数设置命令
             command = self.parameter_panel.get_command(param_type, value)
             if command:
-                self.serial_manager.send_command(command)
-                self.log_panel.add_log(f"发送命令: {command}")
-    
+                if self.serial_manager.send_command(command):
+                    self.status_bar.showMessage(f"发送命令: {command}", 3000)
+
     def on_start_measurement(self):
         """开始测量"""
         if self.serial_manager.is_connected():
             # 获取参数并发送开始命令
             params = self.parameter_panel.get_all_parameters()
             for command in params:
-                self.serial_manager.send_command(command)
-            
-            # 发送开始测量命令
-            self.serial_manager.send_command("$SVR,start,peak*XX")
-    
+                if not self.serial_manager.send_command(command):
+                    self.status_bar.showMessage(f"命令发送失败: {command}", 5000)
+                    return
+
+            if self.serial_manager.send_command("$START"):
+                self.measurement_status_label.setText("启动测量...")
+                self.status_bar.showMessage("已发送启动命令", 3000)
+
     def on_stop_measurement(self):
         """停止测量"""
         if self.serial_manager.is_connected():
-            self.serial_manager.send_command("$STOP*XX")
-    
+            if self.serial_manager.send_command("$STOP"):
+                self.measurement_status_label.setText("停止命令已发送")
+                self.status_bar.showMessage("已发送停止命令", 3000)
+
     def on_pause_measurement(self):
         """暂停测量"""
         if self.serial_manager.is_connected():
-            self.serial_manager.send_command("$PAUSE*XX")
-    
+            if self.serial_manager.send_command("$PAUSE"):
+                self.measurement_status_label.setText("暂停命令已发送")
+                self.status_bar.showMessage("已发送暂停命令", 3000)
+
     def on_resume_measurement(self):
         """恢复测量"""
         if self.serial_manager.is_connected():
-            self.serial_manager.send_command("$RESUME*XX")
-    
+            if self.serial_manager.send_command("$RESUME"):
+                self.measurement_status_label.setText("恢复命令已发送")
+                self.status_bar.showMessage("已发送恢复命令", 3000)
+
     def on_data_received(self, data):
         """处理接收到的数据"""
-        # 解析数据
+        data = data.strip()
+
         if data.startswith("$DATA,"):
             try:
                 parts = data.split(',')
                 if len(parts) >= 4:
                     voltage = float(parts[1])
                     current = float(parts[2])
-                    timestamp = int(parts[3].split('*')[0])
-                    
+                    timestamp = int(parts[3])
+
                     # 发射数据信号
                     self.measurement_data_received.emit(voltage, current, timestamp)
-                    
+
                     # 更新数据计数
                     count = self.data_visualization.get_data_count()
                     self.data_count_label.setText(f"数据点: {count}")
+                    self.measurement_panel.update_data_count(count)
+                    self.measurement_panel.update_current_values(voltage, current)
             except (ValueError, IndexError) as e:
                 pass  # 忽略解析错误
-    
+        elif data.startswith("$ACK"):
+            parts = data.split(',')
+            command = parts[1] if len(parts) > 1 else ""
+            payload = ','.join(parts[1:]) if len(parts) > 1 else ""
+            if payload:
+                self.status_bar.showMessage(f"ACK: {payload}", 3000)
+            else:
+                self.status_bar.showMessage("收到设备确认", 3000)
+
+            if command == "START":
+                self.measurement_status_label.setText("测量中")
+            elif command == "STOP":
+                self.measurement_status_label.setText("待机")
+                self.measurement_panel.measurement_completed()
+            elif command == "PAUSE":
+                self.measurement_status_label.setText("已暂停")
+            elif command == "RESUME":
+                self.measurement_status_label.setText("测量中")
+        elif data.startswith("$INFO"):
+            self.status_bar.showMessage(data, 4000)
+
     def on_error_occurred(self, error_msg):
         """处理错误"""
         QMessageBox.warning(self, "通信错误", error_msg)

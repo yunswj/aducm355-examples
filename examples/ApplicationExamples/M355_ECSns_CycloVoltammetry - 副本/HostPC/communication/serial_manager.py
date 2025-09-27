@@ -98,32 +98,39 @@ class SerialManager(QObject):
         if not self.is_connected():
             self.error_occurred.emit("串口未连接")
             return False
-        
+
+        if command is None:
+            self.error_occurred.emit("命令为空")
+            return False
+
         try:
             with self.send_lock:
-                # 确保命令格式正确
-                if not command.startswith('$'):
-                    command = '$' + command
-                
-                if not command.endswith('\r\n'):
-                    if not command.endswith('*XX'):
-                        if '*' not in command:
-                            command += '*XX'
-                    command += '\r\n'
-                
-                # 发送命令
-                data = command.encode('utf-8')
+                cmd = str(command).strip()
+                if not cmd:
+                    self.error_occurred.emit("命令为空")
+                    return False
+
+                if not cmd.startswith('$'):
+                    cmd = '$' + cmd
+
+                cmd = cmd.rstrip('\r\n')
+                if '*' in cmd:
+                    cmd = cmd.split('*', 1)[0]
+
+                checksum = self.calculate_checksum(cmd)
+                full_command = f"{cmd}*{checksum}\r\n"
+
+                data = full_command.encode('utf-8')
                 bytes_written = self.serial_port.write(data)
-                
+
                 if bytes_written == len(data):
-                    # 设置等待响应
-                    self.pending_command = command.strip()
+                    self.pending_command = cmd
                     self.response_timer.start(self.response_timeout)
                     return True
-                else:
-                    self.error_occurred.emit("命令发送不完整")
-                    return False
-                    
+
+                self.error_occurred.emit("命令发送不完整")
+                return False
+
         except Exception as e:
             error_msg = f"发送命令时发生错误: {str(e)}"
             self.error_occurred.emit(error_msg)
@@ -173,25 +180,31 @@ class SerialManager(QObject):
     
     def process_received_line(self, line):
         """处理接收到的完整行"""
+        if not self.verify_checksum(line):
+            self.error_occurred.emit("接收数据校验失败")
+            return
+
+        payload = line.split('*', 1)[0]
+
         # 发射数据接收信号
-        self.data_received.emit(line)
-        
+        self.data_received.emit(payload)
+
         # 如果有等待响应的命令，停止超时定时器
         if self.pending_command:
             self.response_timer.stop()
             self.pending_command = None
-        
+
         # 解析特定类型的响应
-        if line.startswith('$ACK'):
+        if payload.startswith('$ACK'):
             # 确认响应
             pass
-        elif line.startswith('$NAK'):
+        elif payload.startswith('$NAK'):
             # 否定响应
-            self.error_occurred.emit(f"命令执行失败: {line}")
-        elif line.startswith('$DATA'):
+            self.error_occurred.emit(f"命令执行失败: {payload}")
+        elif payload.startswith('$DATA'):
             # 数据响应
             pass
-        elif line.startswith('$INFO'):
+        elif payload.startswith('$INFO'):
             # 信息响应
             pass
     
@@ -204,9 +217,12 @@ class SerialManager(QObject):
     
     def on_error_occurred(self, error):
         """处理串口错误"""
+        if error == QSerialPort.NoError:
+            return
+
         error_msg = f"串口错误: {self.serial_port.errorString()}"
         self.error_occurred.emit(error_msg)
-        
+
         # 如果是严重错误，断开连接
         if error in [QSerialPort.ResourceError, QSerialPort.DeviceNotFoundError]:
             self.disconnect()
@@ -235,12 +251,18 @@ class SerialManager(QObject):
         """验证接收数据的校验和"""
         if '*' not in line:
             return True  # 没有校验和，认为有效
-        
+
         try:
             data_part, checksum_part = line.rsplit('*', 1)
+            checksum_part = checksum_part.strip()
+
+            # 仅当'*'后紧跟两个十六进制字符时才视为有效校验字段
+            if len(checksum_part) != 2 or any(c not in '0123456789ABCDEFabcdef' for c in checksum_part):
+                return True
+
             expected_checksum = self.calculate_checksum(data_part)
             return checksum_part.upper() == expected_checksum.upper()
-        except:
+        except Exception:
             return False
     
     def set_response_timeout(self, timeout_ms):

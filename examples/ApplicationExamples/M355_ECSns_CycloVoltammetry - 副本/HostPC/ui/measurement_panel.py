@@ -222,12 +222,33 @@ class MeasurementPanel(QWidget):
         """设置连接状态"""
         self.connected = connected
         self.start_btn.setEnabled(connected and not self.measuring)
-    
+
+    def _apply_idle_state(self):
+        """更新界面为待机状态"""
+        self.start_btn.setEnabled(self.connected)
+        self.stop_btn.setEnabled(False)
+        self.pause_btn.setEnabled(False)
+        self.pause_btn.setText("暂停测量")
+
+        self.status_label.setText("待机")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                padding: 10px;
+                border: 2px solid #cccccc;
+                border-radius: 5px;
+                background-color: #f0f0f0;
+            }
+        """)
+
+        self.measurement_timer.stop()
+
     def on_start_clicked(self):
         """开始按钮点击"""
         if not self.connected:
             return
-        
+
         self.measuring = True
         self.paused = False
         self.measurement_time = 0
@@ -267,28 +288,10 @@ class MeasurementPanel(QWidget):
         """停止按钮点击"""
         self.measuring = False
         self.paused = False
-        
+
         # 更新界面状态
-        self.start_btn.setEnabled(self.connected)
-        self.stop_btn.setEnabled(False)
-        self.pause_btn.setEnabled(False)
-        self.pause_btn.setText("暂停测量")
-        
-        self.status_label.setText("待机")
-        self.status_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-                border: 2px solid #cccccc;
-                border-radius: 5px;
-                background-color: #f0f0f0;
-            }
-        """)
-        
-        # 停止计时器
-        self.measurement_timer.stop()
-        
+        self._apply_idle_state()
+
         # 发射停止信号
         self.stop_measurement.emit()
     
@@ -377,7 +380,9 @@ class MeasurementPanel(QWidget):
     
     def measurement_completed(self):
         """测量完成"""
-        self.on_stop_clicked()
+        self.measuring = False
+        self.paused = False
+        self._apply_idle_state()
         
         # 如果启用了声音提示
         if self.sound_alert_check.isChecked():
